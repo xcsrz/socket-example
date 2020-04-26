@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title> socket example </title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style type="text/css">
+        #output-log {
+            background-color: #ccc;
+            border: solid 1px #999;
+        }
+        .btn {
+            font-size: 2em;
+        }
+        pre {
+            white-space: pre-wrap;
+            white-space: -moz-pre-wrap;
+            white-space: -pre-wrap;
+            white-space: -o-pre-wrap;
+            word-wrap: break-word;
+        }
+        pre.local {
+            background-color: rgba(255,255,255,0.3);
+        }
+        pre.status {
+            background-color: rgba(0,0,0,0.3);
+        }
+        pre.terminate {
+            background-color: rgba(200,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <button id="btn-ping" class="btn"> send ping </button>
+    <h2> Event Log </h2>
+    <div id="output-log"></div>
+    <script>
+        (function(){
+            const logMessage = function(source, message, additionalClass=null) {
+                const logEntry = document.createElement('pre')
+                logEntry.innerHTML = source.padStart(30) + ' :> ' +  message
+                if(additionalClass) {
+                    logEntry.classList.add(additionalClass);
+                }
+                document.getElementById('output-log').append(logEntry)
+            }
+            var socket = io.connect('/');
+            socket.on('welcome', function(data) {
+                logMessage("Server Welcome Message", data.message);
+            });
+            socket.on('server_status', function(data) {
+                logMessage("server status update", JSON.stringify(data), 'status');
+            });
+            socket.on('server_event', function(data) {
+                logMessage("server event", data.message);
+            });
+            socket.on('terminate', function(data) {
+                logMessage("server shutting down", JSON.stringify(data), 'terminate');
+                socket.close();
+            });
+            socket.on('synack', function(data) {
+                logMessage("server responded", data.action);
+            });
+            document.getElementById('btn-ping').addEventListener('click', function(){
+                logMessage('local action', 'sending ping', 'local');
+                socket.emit('synack', { action: 'ping' });
+            });
+        })()
+    </script>
+</body>
+</html>
